@@ -1,0 +1,125 @@
+package collections;
+
+
+import org.junit.Test;
+
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.util.*;
+
+/**
+ * Map相关的内容
+ * @
+ *
+ * */
+public class MapT {
+
+    /**
+     * 反射获取私有成员变量的值
+     */
+    static final Object getPrivateField(Object instance, String filedName) throws NoSuchFieldException, IllegalAccessException {
+        Field field = instance.getClass().getDeclaredField(filedName);
+        field.setAccessible(true);
+        return field.get(instance);
+    }
+    /**
+     * 引用HashMap的hash方法
+     * */
+    static final int hash(Object key) {
+        int h=(key == null) ? 0 : (h = key.hashCode()) ^ (h >>> 16);
+        return h;
+    }
+    /**
+     * 获取HashMap key对应的Bucket序号
+     * */
+    static final int getInitialIndex(Object key) {
+        int h = key.hashCode();
+        h = (key == null) ? 0 : (h) ^ (h >>> 16);
+        h = (16 - 1) & h;
+        return h;
+    }
+    /**
+     * 使用迭代器输出map的元素
+     * */
+    static final void printEntrys(Map map){
+        try {
+            Iterator<Map.Entry> i = map.entrySet().iterator();
+            while (i.hasNext()) {
+                Map.Entry e = i.next();
+                Object key = e.getKey();
+                Object value = e.getValue();
+                System.out.print(key+":"+value+"  ");
+            }
+            System.out.println();
+        } catch(Exception e){
+            e.printStackTrace();
+        }
+    }
+    /**
+     * 使用反射输出map的属性
+     * */
+    static final void printAttrs(Map map){
+        try {
+            Object[] o =(Object [])getPrivateField(map,"table");
+            System.out.println("---------------- map.size："+map.size()+
+                    "   threshold："+getPrivateField(map,"threshold")+
+                    "   loadFactor："+getPrivateField(map,"loadFactor")+
+                    "   modCount："+getPrivateField(map,"modCount")+
+                    "   captain："+o.length
+
+            );
+        } catch(Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 探究HashMap的resize时机以及扩容量，为便于观察 使用了有输出信息重写过的HashMap
+     * 1.扩容时机threshold取决loadFactory*captain，向下取整,在进行插入操作前如果size=threshold，进行扩容
+     * 2.扩容的操作其实是将bucket数组数量翻倍
+     * 3.captain只会是2的n次幂，为了便于位运算，依据定义的initialCapacity向上取2^n
+     * 4.默认值 capacity-16 loadFactory-0.75f 即threshold-12
+     * */
+    @Test
+    public void testHashMapResize()  {
+        HashMap<String ,Integer> map = new HashMap<>();
+        //添加元素
+        for(int i=0;i<100;i++) {
+            map.put("S"+i,i);
+            printAttrs(map);
+        }
+        //移除元素
+        for(int i=0;i<100;i++) {
+            map.remove("S"+i);
+            printAttrs(map);
+        }
+    }
+    /**
+     * HashMap的Equals方法是调用迭代器调用了每一个元素key，
+     * 在size相等的条件下，map.get(key)与所遍历key的value equals结果均为true即为true
+     * 所以Map的比较是没有顺序(即使是LinkedHashMap)、不分类型(即使是hashMap与TreeMap)的
+     * 顺序性不是Map的特性，即使使用LinkedHashMap保证了迭代顺序，实际它的存储结构并没有改变
+     * 只要key与value列表的组合一致，Map的equals将永远返回true
+     * */
+    @Test
+    public void testMapEquals()  {
+        Map<String ,Integer> map = new TreeMap<>();
+        map.put("kile",MapT.getInitialIndex("kile"));
+        map.put("Carlon",MapT.getInitialIndex("Carlon"));
+        map.put("Lilei",MapT.getInitialIndex("Lilei"));
+        map.put("Tom",MapT.getInitialIndex("Tom"));
+        map.put("carson",MapT.getInitialIndex("carson"));
+        map.put("Jack",MapT.getInitialIndex("Jack"));
+        //调整了map的顺序，尤其调整了一个bucket的Tom与Lilei，使其迭代顺序不同了
+        Map<String ,Integer> map2 = new LinkedHashMap<>();
+        map2.put("Carlon",MapT.getInitialIndex("Carlon"));
+        map2.put("kile",MapT.getInitialIndex("kile"));
+        map2.put("Jack",MapT.getInitialIndex("Jack"));
+        map2.put("Tom",MapT.getInitialIndex("Tom"));
+        map2.put("carson",MapT.getInitialIndex("carson"));
+        map2.put("Lilei",MapT.getInitialIndex("Lilei"));
+        MapT.printEntrys(map);
+        MapT.printEntrys(map2);
+        System.out.println("---------------- is map equals map2?"+map.equals(map2));
+    }
+}
