@@ -6,10 +6,10 @@ import org.junit.Test;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Map相关的内容
- * @
  *
  * */
 public class MapT {
@@ -121,5 +121,52 @@ public class MapT {
         MapT.printEntrys(map);
         MapT.printEntrys(map2);
         System.out.println("---------------- is map equals map2?"+map.equals(map2));
+    }
+
+
+
+    /**
+     * 测试HashMap与Concurrent在并发下的区别
+     * 使用HashMap会出现线程安全问题，高度并发时甚至可能会造成扩容时死循环，所以有时可能会卡死
+     * 在确认1000个线程执行完毕后，清点map.size
+     * 使用ConcurrentHashMap的size总为1000000，但HashMap基本每次结果都不同且基本不会是我们预想的数字
+     * */
+    volatile Integer p=0;
+    @Test
+    public void testConcurrentSafe(){
+        //于此切换不同的HashMap
+        //Map<String,String> map=new HashMap<>();
+        Map<String,String> map=new ConcurrentHashMap<>();
+        for(int i=0;i<1000;i++){
+            Thread thread = new MapThread1(map,i*1000);
+            thread.start();
+        }
+        try {
+            Thread.sleep(5000);
+            //确认p为1000保证所有线程执行完毕，不过p的改变也有很小概率发生线程不安全问题，可以多试几次
+            //加了锁 没问题了
+            System.out.println(p+"个线程执行完毕，map.size():"+map.size());
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    class MapThread1 extends Thread {
+        Map<String,String> map;
+        int n;
+        MapThread1(Map map,int n){
+            this.map=map;
+            this.n=n;
+        }
+        @Override
+        public void run() {
+            for(Integer j=0+n;j<1000+n;j++) {
+                map.put(j.toString() , "");
+            }
+            synchronized ("a"){
+                p++;
+            }
+            System.out.println("线程执行完毕"+map.size());
+        }
     }
 }
