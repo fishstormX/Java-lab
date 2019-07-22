@@ -1,9 +1,8 @@
-package collections;
+package collectionAndMap;
 
 
 import org.junit.Test;
 
-import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -14,6 +13,22 @@ import java.util.concurrent.ConcurrentHashMap;
  * */
 public class MapT {
 
+    static final void buildMap(Map map){
+        map.put("kile",MapT.getInitialIndex("kile"));
+        map.put("Carlon",MapT.getInitialIndex("Carlon"));
+        map.put("Lilei",MapT.getInitialIndex("Lilei"));
+        map.put("Tom",MapT.getInitialIndex("Tom"));
+        map.put("carson",MapT.getInitialIndex("carson"));
+        map.put("Jack",MapT.getInitialIndex("Jack"));
+    }
+    static final void buildMap2(Map map){
+        map.put("kile2",MapT.getInitialIndex("kile"));
+        map.put("Carlon2",MapT.getInitialIndex("Carlon"));
+        map.put("Lilei2",MapT.getInitialIndex("Lilei"));
+        map.put("Tom2",MapT.getInitialIndex("Tom"));
+        map.put("carson2",MapT.getInitialIndex("carson"));
+        map.put("Jack2",MapT.getInitialIndex("Jack"));
+    }
     /**
      * 反射获取私有成员变量的值
      */
@@ -104,26 +119,60 @@ public class MapT {
     @Test
     public void testMapEquals()  {
         Map<String ,Integer> map = new TreeMap<>();
-        map.put("kile",MapT.getInitialIndex("kile"));
-        map.put("Carlon",MapT.getInitialIndex("Carlon"));
-        map.put("Lilei",MapT.getInitialIndex("Lilei"));
-        map.put("Tom",MapT.getInitialIndex("Tom"));
-        map.put("carson",MapT.getInitialIndex("carson"));
-        map.put("Jack",MapT.getInitialIndex("Jack"));
+        buildMap(map);
         //调整了map的顺序，尤其调整了一个bucket的Tom与Lilei，使其迭代顺序不同了
         Map<String ,Integer> map2 = new LinkedHashMap<>();
-        map2.put("Carlon",MapT.getInitialIndex("Carlon"));
-        map2.put("kile",MapT.getInitialIndex("kile"));
-        map2.put("Jack",MapT.getInitialIndex("Jack"));
-        map2.put("Tom",MapT.getInitialIndex("Tom"));
-        map2.put("carson",MapT.getInitialIndex("carson"));
-        map2.put("Lilei",MapT.getInitialIndex("Lilei"));
+        buildMap(map2);
         MapT.printEntrys(map);
         MapT.printEntrys(map2);
         System.out.println("---------------- is map equals map2?"+map.equals(map2));
     }
+    /***
+     * fail-fast
+     * */
+    @Test
+    public void testIteratorExceptions() throws NoSuchFieldException, IllegalAccessException {
+        Map<String,Integer> map=new HashMap<>();
+        buildMap(map);
+        System.out.println("迭代前：" + map);
+        System.out.print("foreach :");
 
+        for (Map.Entry entry: map.entrySet()) {
+            System.out.print(entry.getKey()+":"+entry.getValue() + " ,");
+            //括号中记录这一步的modCount
+            System.out.print("("+getPrivateField(map,"modCount")+")");
+            //foreach迭代时不能添加删除元素(改变modCount计数)，否则一律会抛出ConcurrentModificationException
+            //map.put("newKey",120);
+            //map.remove("Lilei");
+            if (entry.getKey().equals("Tom")) {
+                //但是改变数值可以
+                map.put("kile", 0);
+            }
+        }
+    }
 
+    /***
+     * 试想，如果迭代时直接改变map指向，会发生什么
+     * */
+    @Test
+    public void testIteratorExceptions2() throws NoSuchFieldException, IllegalAccessException {
+        Map<String,Integer> map=new HashMap<>();
+        buildMap(map);
+        System.out.println("迭代前：" + map);
+        System.out.print("foreach :");
+
+        for (Map.Entry entry: map.entrySet()) {
+            System.out.print(entry.getKey()+":"+entry.getValue() + " ,");
+            System.out.print("("+getPrivateField(map,"modCount")+")");
+
+            if (entry.getKey().equals("Tom")) {
+                //此处改变了map的指向，但其实EntrySet作为之前map的子类迭代的仍是之前的map，之前map的modCount也依旧是6
+               map=new HashMap<>();
+               buildMap2(map);
+               map.put("newKey",0);
+            }
+        }
+    }
 
     /**
      * 测试HashMap与Concurrent在并发下的区别

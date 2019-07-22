@@ -1,9 +1,8 @@
-package collections;
+package collectionAndMap;
 
 import org.junit.Test;
 
 
-import javax.swing.text.html.HTMLDocument;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -13,7 +12,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * */
 public class ListT {
     private List<String> list= new ArrayList<>();
-
     /**
      * 反射获取私有成员变量的值
      */
@@ -68,22 +66,23 @@ public class ListT {
             //foreach迭代时可以随便修改元素，只要不改变数组指向，因为迭代指向的是旧数组，
             // 否则一律会抛出ConcurrentModificationException
             if(str.equals("1")){
-                list.remove(2);
-                list.add("8");
-                //但是改变数值可以
-                list.set(3,"5");
+                list=new CopyOnWriteArrayList<>();
+                buildList(list);
+
             }
         }
+        System.out.println("CopyOnWriteArrayList 迭代前："+list);
+        //fail-safe
         System.out.print("\niterator :");
          i=list.iterator();
         while(i.hasNext()){
             String s=i.next().toString();
             //同上
-            if(s.equals("1")){
-                list.remove(2);
+            if(s.equals("1")){//list.remove(2);
+
                 list.add("8");
-                //但是改变数值可以
-                list.set(3,"5");
+               /* //但是改变数值可以
+                list.set(3,"5");*/
             }
             System.out.print(s+" ,");
             //考虑并发安全 迭代中不能通过iteratorre move，会报UnsupportedOperationException
@@ -93,7 +92,7 @@ public class ListT {
     }
 
     /**
-     * list的扩容
+     * list的扩容 扩容一半（+ >>）
      * */
     @Test
     public void testListResize(){
