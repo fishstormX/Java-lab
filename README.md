@@ -13,4 +13,4 @@
 #### case列表  
 
 ---
-[Java数据结构](/collectionAndMap/Collection&Map.md)  
+[Java数据结构](https://github.com/fishstormX/Java-lab/tree/master/src/main/java/collectionAndMap)  
