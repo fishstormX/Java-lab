@@ -24,11 +24,54 @@ public class ListT {
      * 为list随便添加点元素
      */
     private void buildList(List i){
-        list.add("1");
-        list.add("2");
-        list.add("3");
-        list.add("4");
-        list.add("5");
+       buildList(i,5);
+    }
+    /***
+     * 为list随便添加指定长度的点元素
+     */
+    private void buildList(List i,int n){
+        for(Integer j=0;j<n;j++){
+            i.add(j.toString());
+        }
+    }
+
+    /**
+     * 测试list迭代的效率
+     * ArrayList LinkedList for 和foreach
+     * Linked不能随机访问，使用for循环的时间复杂度为O(n^2/2)
+     * 其余为O(n)
+     * */
+    @Test
+    public void testIterEfficiency(){
+        ArrayList<String> arrayList=new ArrayList<>();
+        buildList(arrayList,100000);
+        long timeline=System.currentTimeMillis();
+        for(int i=0;i<arrayList.size();i++){
+            System.out.print(arrayList.get(i));
+        }
+        long timeline2=System.currentTimeMillis();
+        System.out.println("\n"+"arrayList for："+(timeline2-timeline));
+        timeline=System.currentTimeMillis();
+        for(String s:arrayList){
+            System.out.print(s);
+        }
+        timeline2=System.currentTimeMillis();
+        System.out.println("\n"+"arrayList foreach："+(timeline2-timeline));
+
+        LinkedList<String> linkedList=new LinkedList<>();
+        buildList(linkedList,100000);
+        timeline=System.currentTimeMillis();
+        for(int i=0;i<linkedList.size();i++){
+            System.out.print(linkedList.get(i));
+        }
+        timeline2=System.currentTimeMillis();
+        System.out.println("\n"+"linkedList for："+(timeline2-timeline));
+        timeline=System.currentTimeMillis();
+        for(String s:linkedList){
+            System.out.print(s);
+        }
+        timeline2=System.currentTimeMillis();
+        System.out.print("\n"+"linkedList foreach："+(timeline2-timeline));
     }
 
     @Test
@@ -78,8 +121,8 @@ public class ListT {
         while(i.hasNext()){
             String s=i.next().toString();
             //同上
-            if(s.equals("1")){//list.remove(2);
-
+            if(s.equals("1")){
+                //list.remove(2);
                 list.add("8");
                /* //但是改变数值可以
                 list.set(3,"5");*/
@@ -119,7 +162,9 @@ public class ListT {
                 list1.add(i);
             }
         }catch(NoSuchFieldException e){
+
         }catch(IllegalAccessException e){
+
         }
     }
     /**
